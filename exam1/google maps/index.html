@@ -1,0 +1,190 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <style>
+        #map {
+            height: 100%;
+        }
+    </style>
+
+</head>
+
+<body>
+    <input id="start" readonly value="Sanfrancisco">
+    <input id="end">
+    <input type="button" value="Go" class="btn btn-warning" onClick="calcRoute()">
+    <input type="button" value="Drop Pin" class="btn btn-primary" onClick="dropPin()">
+    <input type="button" value="My Location" class="btn btn-info" onClick="getLoc()">
+    <div id="map"> </div>
+    <div id="directions"> </div>
+    <script type="text/javascript">
+        var myMap;
+        var myMarker;
+        var myWindow;
+        var directionsDisplay;
+        var directionsService;
+        var myImg = "img/marker.png"
+        function initMap() {
+            var paris = new google.maps.LatLng(37.786261, -122.399533);
+            var myStyle =
+                [
+                    {
+                        "featureType": "landscape.natural",
+                        "elementType": "geometry.fill",
+                        "stylers": [
+                            {
+                                "visibility": "on"
+                            },
+                            {
+                                "color": "#e0efef"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "geometry.fill",
+                        "stylers": [
+                            {
+                                "visibility": "on"
+                            },
+                            {
+                                "hue": "#1900ff"
+                            },
+                            {
+                                "color": "#c0e8e8"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "geometry",
+                        "stylers": [
+                            {
+                                "lightness": 100
+                            },
+                            {
+                                "visibility": "simplified"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "labels",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "transit.line",
+                        "elementType": "geometry",
+                        "stylers": [
+                            {
+                                "visibility": "on"
+                            },
+                            {
+                                "lightness": 700
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#7dcdcd"
+                            }
+                        ]
+                    }
+                ];
+            directionsService = new google.maps.DirectionsService;
+            directionsDisplay = new google.maps.DirectionsRenderer;
+            var mapOption = {
+                zoom: 7,
+                styles: myStyle,
+                center: paris,
+            }
+            myMap = new google.maps.Map(document.getElementById("map"), mapOption);
+
+            directionsDisplay.setMap(myMap);
+            directionsDisplay.setPanel(document.getElementById('directions'));
+
+
+        }
+        function calcRoute() {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+            var request = {
+                origin: start,
+                destination: end,
+                travelMode: google.maps.TravelMode.DRIVING
+            }
+            directionsService.route(request, function (result, status) {
+                if (status == 'OK') {
+                    directionsDisplay.setDirections(result);
+                }
+            })
+        }
+
+        function getLoc() {
+            myWindow = new google.maps.InfoWindow;
+            //get location info from browser aka navigator
+            if (navigator.geolocation) {
+                //if navigator got your position, the variable position
+                //is returned. this has your lat and long inside it.
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    myWindow.setPosition(pos);
+                    myWindow.setContent("Location Found!!!!");
+                    myWindow.open(myMap);
+                    myMap.setCenter(pos);
+                })
+            }
+        }
+        function dropPin() {
+            //if there is already a marker on the map, remove it
+            if (myMarker != null) {
+                myMarker.setMap(null);
+            }
+            //create a new marker and place it on the map
+            myMarker = new google.maps.Marker({
+                position: myMap.getCenter(),
+                animation: google.maps.Animation.DROP,
+                draggable: true,
+                icon: myImg,
+                map: myMap,
+            });
+            myMarker.addListener('click', toggleBounce);
+            //when marker stops dragging, call copyMarkerPosition.
+            google.maps.event.addListener(myMarker, 'dragend', function () {
+                copyMarkerPosition();
+            });
+        }
+        function copyMarkerPosition() {
+            var newLat = myMarker.getPosition().lat();
+            var newLng = myMarker.getPosition().lng();
+            document.getElementById("end").value = newLat + ',' + newLng;
+        }
+        function toggleBounce() {
+            //if the marker is already animated, stop the animation
+            if (myMarker.getAnimation() != null) {
+                myMarker.setAnimation(null);
+            }
+            //if not then make it bounce.
+            else
+                myMarker.setAnimation(google.maps.Animation.BOUNCE);
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyATH0LwU94ExyHRRTuq2jKuUjFYzC7XyzE
+    &callback=initMap">
+    </script>
+
+</body>
+
+</html>
